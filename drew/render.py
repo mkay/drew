@@ -25,10 +25,6 @@ from drew.model import (Arrow, Blur, Ellipse, Highlighter, Line, Marker,
                         Rect, Spotlight, Text)
 
 FONT_FAMILY = "Sans Bold"
-#: How dark the rest of the image goes under a spotlight.
-DIM_ALPHA = 0.6
-#: Opacity of a highlighter stroke.
-HIGHLIGHTER_ALPHA = 0.45
 
 
 def render(cr, doc):
@@ -62,7 +58,7 @@ def _draw_blur(cr, a, doc):
 def _draw_highlighter(cr, a):
     r, g, b = a.style.stroke[:3]
     cr.rectangle(*a.bounds())
-    cr.set_source_rgba(r, g, b, HIGHLIGHTER_ALPHA)
+    cr.set_source_rgba(r, g, b, a.style.opacity)
     # Multiply keeps dark text dark under a light wash, as a real marker does.
     cr.set_operator(cairo.OPERATOR_MULTIPLY)
     cr.fill()
@@ -73,7 +69,7 @@ def _draw_dim(cr, highlights, doc):
     # overlapping highlights don't double up the way even-odd filling would.
     cr.save()
     cr.push_group()
-    cr.set_source_rgba(0, 0, 0, DIM_ALPHA)
+    cr.set_source_rgba(0, 0, 0, highlights[0].style.dim)
     cr.paint()
     cr.set_operator(cairo.OPERATOR_CLEAR)
     for h in highlights:

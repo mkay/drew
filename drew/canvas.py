@@ -14,7 +14,7 @@ from gi.repository import Gdk, Gio, GLib, GObject, Gtk
 
 from drew.history import History
 from drew.i18n import _
-from drew.model import Style, Text
+from drew.model import Spotlight, Style, Text
 from drew.render import measure_text, render
 from drew.tools import HIT_PX, TOOLS
 
@@ -160,11 +160,17 @@ class Canvas(Gtk.DrawingArea):
         self.queue_draw()
 
     def apply_style(self, **changes):
-        """Change the current style, and the selected shape's if any."""
+        """Change the current style, and the selected shape's if any.
+
+        Dim belongs to the one shared layer, so it goes to every spotlight."""
         for key, value in changes.items():
             setattr(self.style, key, value)
             if self.selection is not None:
                 setattr(self.selection.style, key, value)
+            if key == "dim":
+                for a in self.doc.annotations:
+                    if isinstance(a, Spotlight):
+                        a.style.dim = value
         if isinstance(self.selection, Text):
             measure_text(self.selection)
         if self.selection is not None:

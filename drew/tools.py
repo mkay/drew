@@ -17,7 +17,7 @@ gi.require_version("Gdk", "4.0")
 from gi.repository import Gdk
 
 from drew.model import (Arrow, Blur, Ellipse, Highlighter, Line, Marker,
-                        Rect, Spotlight, Text, constrain_angle,
+                        Pixelate, Rect, Spotlight, Text, constrain_angle,
                         constrain_square)
 
 #: Radius around a handle, in widget pixels, that counts as grabbing it.
@@ -33,6 +33,9 @@ _RESIZE_CURSORS = {
 
 class Tool:
     cursor = "default"
+    #: Annotation class this tool creates, for the style popover to know
+    #: which properties matter before anything is drawn. None for Select.
+    shape = None
 
     def __init__(self, canvas):
         self.canvas = canvas
@@ -180,9 +183,7 @@ class BlurTool(RectTool):
 
 
 class PixelateTool(RectTool):
-    @staticmethod
-    def shape(**kwargs):
-        return Blur(mode="pixelate", **kwargs)
+    shape = Pixelate
 
 
 class ArrowTool(ShapeTool):
@@ -197,6 +198,7 @@ class LineTool(ArrowTool):
 class TextTool(Tool):
     """Click to place text; the canvas opens an editor for it."""
     cursor = "text"
+    shape = Text
 
     def press(self, x, y, mods):
         text = Text(style=copy.deepcopy(self.canvas.style), x=x, y=y)
@@ -213,6 +215,7 @@ class TextTool(Tool):
 class MarkerTool(Tool):
     """Click to drop the next number; drag to place it before letting go."""
     cursor = "crosshair"
+    shape = Marker
 
     def __init__(self, canvas):
         super().__init__(canvas)

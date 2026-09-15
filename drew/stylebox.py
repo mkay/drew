@@ -64,9 +64,26 @@ class Swatch(Gtk.DrawingArea):
 
 
 class StyleButton(Gtk.MenuButton):
+    """One popover for every adjustable property.
+
+    Rows are built once and shown or hidden by `show_for()`, so the popover
+    only ever offers what the selected shape — or the tool about to draw
+    one — actually uses.
+    """
     __gsignals__ = {
         # (property name, new value) — the window forwards it to the canvas.
         "style-changed": (GObject.SignalFlags.RUN_FIRST, None, (str, object)),
+    }
+
+    #: Slider rows: property → (label, lo, hi, step, digits).
+    SLIDERS = {
+        "width": (_("Line width"), 1, 16, 1, 0),
+        "font_size": (_("Text size"), 10, 96, 1, 0),
+        "marker_size": (_("Marker size"), 8, 48, 1, 0),
+        "opacity": (_("Opacity"), 0.1, 0.9, 0.05, 2),
+        "dim": (_("Dim"), 0.1, 0.95, 0.05, 2),
+        "blur": (_("Blur radius"), 1, 40, 1, 0),
+        "block": (_("Block size"), 2, 64, 1, 0),
     }
 
     def __init__(self, style):
@@ -74,8 +91,10 @@ class StyleButton(Gtk.MenuButton):
                          valign=Gtk.Align.CENTER)
         self._swatch = Swatch(style.stroke)
         self.set_child(self._swatch)
-        #: True while show_style() sets widgets; handlers stay quiet.
+        #: True while show_for() sets widgets; handlers stay quiet.
         self._updating = False
+        #: Row widgets by property name, for show/hide.
+        self._rows = {}
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
                       margin_top=6, margin_bottom=6,
@@ -93,31 +112,33 @@ class StyleButton(Gtk.MenuButton):
         custom.connect("clicked", self._on_custom)
         palette.append(custom)
         box.append(palette)
+        self._rows["stroke"] = palette
 
-        self._width = self._scale(box, _("Line width"), 1, 16, style.width)
-        self._width.connect("value-changed",
-                            lambda s: self._emit("width", s.get_value()))
-        self._size = self._scale(box, _("Text size"), 10, 96, style.font_size)
-        self._size.connect("value-changed",
-                           lambda s: self._emit("font_size", s.get_value()))
+        self._scales = {}
+        for prop, (label, lo, hi, step, digits) in self.SLIDERS.items():
+            row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            row.append(Gtk.Label(label=label, xalign=0))
+            scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,
+                                             lo, hi, step)
+            scale.set_value(getattr(style, prop))
+            scale.set_draw_value(True)
+            scale.set_value_pos(Gtk.PositionType.RIGHT)
+            scale.set_digits(digits)
+            scale.connect("value-changed",
+                          lambda s, prop=prop: self._emit(prop, s.get_value()))
+            row.append(scale)
+            box.append(row)
+            self._rows[prop] = row
+            self._scales[prop] = scale
 
-        self._fill = Gtk.CheckButton(label=_("Fill shapes"),
+        self._fill = Gtk.CheckButton(label=_("Fill"),
                                      active=style.fill is not None)
         self._fill.connect("toggled", self._on_fill)
         box.append(self._fill)
+        self._rows["fill"] = self._fill
 
         self.set_popover(Gtk.Popover(child=box))
-
-    @staticmethod
-    def _scale(box, title, lo, hi, value):
-        box.append(Gtk.Label(label=title, xalign=0))
-        scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, lo, hi, 1)
-        scale.set_value(value)
-        scale.set_draw_value(True)
-        scale.set_value_pos(Gtk.PositionType.RIGHT)
-        scale.set_digits(0)
-        box.append(scale)
-        return scale
+        self.show_for(("stroke", "width", "fill"), style)
 
     def _emit(self, name, value):
         if not self._updating:
@@ -146,13 +167,16 @@ class StyleButton(Gtk.MenuButton):
     def _on_fill(self, check):
         self._emit("fill", self._swatch.rgba if check.get_active() else None)
 
-    def show_style(self, style):
-        """Reflect a selected shape's style without emitting changes."""
+    def show_for(self, props, style):
+        """Show only the rows in `props`, with values from `style`, without
+        emitting changes."""
         self._updating = True
         try:
+            for name, row in self._rows.items():
+                row.set_visible(name in props)
             self._swatch.set_rgba(style.stroke)
-            self._width.set_value(style.width)
-            self._size.set_value(style.font_size)
+            for prop, scale in self._scales.items():
+                scale.set_value(getattr(style, prop))
             self._fill.set_active(style.fill is not None)
         finally:
             self._updating = False

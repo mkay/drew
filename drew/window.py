@@ -13,6 +13,7 @@ from drew.canvas import MARGIN, Canvas
 from drew.document import Document
 from drew.preferences import PreferencesDialog
 from drew.stylebox import StyleButton
+from drew.tools import TOOLS as TOOL_CLASSES
 
 #: Tool name, icon, tooltip — in toolbar order.
 TOOLS = [
@@ -250,6 +251,7 @@ class Window(Adw.ApplicationWindow):
         name = value.get_string()
         self._tools.set_active_name(name)
         self.canvas.set_tool(name)
+        self._show_style_context()
 
     def _on_toggle_changed(self, group, _pspec):
         self._set_tool(group.get_active_name())
@@ -263,8 +265,18 @@ class Window(Adw.ApplicationWindow):
         selected = canvas.selection is not None
         for name in ("delete", "raise", "lower", "front", "back"):
             self.lookup_action(name).set_enabled(selected)
-        if canvas.selection is not None:
-            self._style.show_style(canvas.selection.style)
+        self._show_style_context()
+
+    def _show_style_context(self):
+        """The popover offers what the selection uses — or, with nothing
+        selected, what the active tool is about to draw."""
+        selection = self.canvas.selection
+        if selection is not None:
+            self._style.show_for(selection.props(), selection.style)
+            return
+        shape = TOOL_CLASSES[self.lookup_action("tool").get_state().get_string()].shape
+        props = shape.props() if shape else ("stroke", "width", "fill")
+        self._style.show_for(props, self.canvas.style)
 
     def _on_history_changed(self, canvas):
         self.lookup_action("undo").set_enabled(canvas.history.can_undo)

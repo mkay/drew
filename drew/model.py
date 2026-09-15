@@ -22,6 +22,12 @@ _ids = itertools.count(1)
 
 @dataclass
 class Style:
+    """Every adjustable property, for every kind of annotation.
+
+    One class rather than one per shape keeps applying, copying and
+    persisting uniform; each annotation says which of these it uses via
+    `props()`, and the popover shows only those.
+    """
     #: RGBA in 0..1.
     stroke: tuple = (0.878, 0.106, 0.141, 1.0)  # GNOME red 3
     width: float = 4.0
@@ -29,12 +35,29 @@ class Style:
     fill: tuple | None = None
     #: Text size in image pixels.
     font_size: float = 24.0
+    #: Marker disc radius in image pixels.
+    marker_size: float = 16.0
+    #: Highlighter wash opacity, 0..1.
+    opacity: float = 0.45
+    #: How dark the rest of the image goes under a spotlight, 0..1.
+    dim: float = 0.6
+    #: Gaussian blur radius in image pixels.
+    blur: float = 8.0
+    #: Pixelate block size in image pixels.
+    block: float = 12.0
 
 
 @dataclass(eq=False)
 class Annotation:
     style: Style = field(default_factory=Style)
     id: int = field(default_factory=lambda: next(_ids))
+
+    #: Style fields this kind of annotation uses, in display order.
+    PROPS = ("stroke", "width")
+
+    @classmethod
+    def props(cls):
+        return cls.PROPS
 
     def bounds(self):
         """(x, y, w, h) enclosing the shape, ignoring stroke width."""
@@ -66,6 +89,7 @@ class Annotation:
 @dataclass(eq=False)
 class Rect(Annotation):
     """Axis-aligned rectangle given by two opposite corners (any order)."""
+    PROPS = ("stroke", "width", "fill")
     x1: float = 0.0
     y1: float = 0.0
     x2: float = 0.0
@@ -189,26 +213,36 @@ class Region(Rect):
 
 @dataclass(eq=False)
 class Spotlight(Region):
-    """Everything outside all Spotlight regions is dimmed."""
+    """Everything outside all Spotlight regions is dimmed.
+
+    `dim` is a property of the one shared dim layer, so the canvas applies a
+    change to every spotlight and the renderer reads it from the first."""
+    PROPS = ("dim",)
 
 
 @dataclass(eq=False)
 class Highlighter(Region):
     """A translucent wash of the stroke colour, like a marker pen: what is
     under it stays readable."""
+    PROPS = ("stroke", "opacity")
 
 
 @dataclass(eq=False)
 class Blur(Region):
-    """The image under the region is blurred or pixelated.
-
-    Strength follows the style's line width so the one slider covers it:
-    blur radius and pixel block both grow with it.
-    """
-    mode: str = "blur"  # "blur" | "pixelate"
+    """The image under the region is blurred."""
+    PROPS = ("blur",)
 
     def strength(self):
-        return int(self.style.width)
+        return int(self.style.blur)
+
+
+@dataclass(eq=False)
+class Pixelate(Blur):
+    """The image under the region is reduced to blocks."""
+    PROPS = ("block",)
+
+    def strength(self):
+        return int(self.style.block)
 
 
 @dataclass(eq=False)
@@ -219,6 +253,7 @@ class Text(Annotation):
     are a cache the renderer fills in each time it draws or measures the
     text; until then the box is empty and unhittable.
     """
+    PROPS = ("stroke", "font_size", "fill")
     x: float = 0.0
     y: float = 0.0
     text: str = ""
@@ -255,12 +290,13 @@ class Text(Annotation):
 @dataclass(eq=False)
 class Marker(Annotation):
     """A numbered disc — ①②③ — for step-by-step callouts."""
+    PROPS = ("stroke", "marker_size")
     cx: float = 0.0
     cy: float = 0.0
     number: int = 1
 
     def radius(self):
-        return self.style.width * 2 + 8
+        return self.style.marker_size
 
     def bounds(self):
         r = self.radius()

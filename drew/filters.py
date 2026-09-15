@@ -13,6 +13,8 @@ import weakref
 import cairo
 from PIL import Image, ImageFilter
 
+from drew.model import Pixelate
+
 _cache = weakref.WeakKeyDictionary()
 
 
@@ -26,16 +28,16 @@ def region_surface(source, blur, image_w, image_h):
     x1, y1 = min(image_w, x + w), min(image_h, y + h)
     if x1 <= x0 or y1 <= y0:
         return None
-    key = (blur.mode, blur.strength(), x0, y0, x1, y1)
+    key = (type(blur), blur.strength(), x0, y0, x1, y1)
     cached = _cache.get(blur)
     if cached is not None and cached[0] == key:
         return cached[1], x0, y0
 
     image = _crop(source, x0, y0, x1 - x0, y1 - y0)
-    if blur.mode == "pixelate":
-        image = _pixelate(image, blur.strength() * 3)
+    if isinstance(blur, Pixelate):
+        image = _pixelate(image, blur.strength())
     else:
-        image = image.filter(ImageFilter.GaussianBlur(blur.strength() * 1.5))
+        image = image.filter(ImageFilter.GaussianBlur(blur.strength()))
     surface = _to_surface(image)
     _cache[blur] = (key, surface)
     return surface, x0, y0

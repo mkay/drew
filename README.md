@@ -30,10 +30,10 @@ Without `-o`, Ctrl+S writes `~/Pictures/screenshot-YYYYMMDD-HHMMSS.png` — fold
 | M / 7 | Numbered marker — each click drops the next number |
 | H | Highlighter — translucent wash in the current colour, marker-pen style |
 | S | Spotlight — everything outside the region is dimmed; several regions combine |
-| B | Blur — strength follows the line width slider |
-| P | Pixelate — block size follows the line width slider |
+| B | Blur |
+| P | Pixelate |
 
-Delete removes the selection, Esc deselects, arrow keys nudge (Shift = 10 px). Page Up / Page Down raise or lower the selected shape one step, Home / End bring it to the front or send it to the back; the same is in the right-click menu on a shape. Ctrl+Z / Ctrl+Shift+Z undo and redo, Ctrl+C copies the annotated image to the clipboard. Ctrl+scroll zooms around the pointer, Ctrl+plus/minus step, Ctrl+1 is actual size, Ctrl+0 fits the window again; middle-drag pans. Colour, line width, text size and fill live behind the swatch button; changing them restyles the selected shape. Fill turns rectangles and ellipses solid and puts text on a rounded chip.
+Delete removes the selection, Esc deselects, arrow keys nudge (Shift = 10 px). Page Up / Page Down raise or lower the selected shape one step, Home / End bring it to the front or send it to the back; the same is in the right-click menu on a shape. Ctrl+Z / Ctrl+Shift+Z undo and redo, Ctrl+C copies the annotated image to the clipboard. Ctrl+scroll zooms around the pointer, Ctrl+plus/minus step, Ctrl+1 is actual size, Ctrl+0 fits the window again; middle-drag pans. The swatch button holds the properties of whatever is selected — or of the tool about to draw: colour and line width for arrows and lines, fill for rectangles and ellipses, text size, marker size, highlighter opacity, spotlight dim, blur radius, pixelate block size. Changing a value restyles the selection and becomes the default for the next shape. Fill turns rectangles and ellipses solid and puts text on a rounded chip.
 
 ## Building
 

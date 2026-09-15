@@ -17,12 +17,20 @@ DEFAULTS = {
     "save_dir": "",
     #: File name stem before the timestamp.
     "filename_prefix": "screenshot",
-    #: Drawing style at startup — the last one used.
+    #: Drawing style at startup — the last one used. Keys mirror
+    #: model.Style; stroke is a list and fill a bool for JSON's sake.
     "stroke": [0.878, 0.106, 0.141, 1.0],
     "width": 4.0,
-    "font_size": 24.0,
     "fill": False,
+    "font_size": 24.0,
+    "marker_size": 16.0,
+    "opacity": 0.45,
+    "dim": 0.6,
+    "blur": 8.0,
+    "block": 12.0,
 }
+STYLE_KEYS = ("stroke", "width", "fill", "font_size", "marker_size",
+              "opacity", "dim", "blur", "block")
 
 
 class Settings:
@@ -49,15 +57,16 @@ class Settings:
     def style(self):
         """The stored drawing style as a model Style."""
         from drew.model import Style
-        stroke = tuple(self.get("stroke"))
-        return Style(stroke=stroke, width=self.get("width"),
-                     font_size=self.get("font_size"),
-                     fill=stroke if self.get("fill") else None)
+        values = {key: self.get(key) for key in STYLE_KEYS}
+        stroke = tuple(values.pop("stroke"))
+        fill = stroke if values.pop("fill") else None
+        return Style(stroke=stroke, fill=fill, **values)
 
     def save_style(self, style):
-        self._values.update(stroke=list(style.stroke), width=style.width,
-                            font_size=style.font_size,
-                            fill=style.fill is not None)
+        for key in STYLE_KEYS:
+            self._values[key] = getattr(style, key)
+        self._values["stroke"] = list(style.stroke)
+        self._values["fill"] = style.fill is not None
         self.save()
 
     def save(self):
