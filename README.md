@@ -110,6 +110,8 @@ The **name** is not licensed by either grant — give a fork its own.
 
 Drew bundles [Phosphor Icons](https://phosphoricons.com/) (MIT) for the toolbar — GPL-compatible; [COPYRIGHT](COPYRIGHT) has the details. `scripts/extract-phosphor.py` regenerates them from the Phosphor release zip.
 
+`build-deb.sh` is based on the script [Nolan Provencher](https://github.com/ner216) contributed to Stenmark.
+
 ## Disclaimer
 
 This project was developed with AI assistance. Use at your own discretion.

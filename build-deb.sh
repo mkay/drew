@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Based on the build-deb.sh that Nolan Provencher (ner216) contributed to
+# Stenmark (https://github.com/mkay/stenmark, PR #3), extended there and
+# adapted for Drew.
+#
 # Builds a .deb from the current checkout, without any of the release
 # machinery — no tagging, no pushing, no uploads. Useful for packaging a
 # branch, or a main that is ahead of the latest release.
