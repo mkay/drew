@@ -2,6 +2,8 @@
 
 Image annotation for Wayland. Bells and whistles included.
 
+![Drew Icon](data/de.singular.drew.svg)
+
 Open an image or pipe one in and add arrows, shapes, text, numbered markers, spotlight, blur and pixelate. Everything stays movable and resizable until you save.
 
 Drew captures nothing itself — it takes its image from grim, wl-paste or any other tool. Built with GTK4 and libadwaita.
