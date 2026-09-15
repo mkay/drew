@@ -246,6 +246,30 @@ class Pixelate(Blur):
 
 
 @dataclass(eq=False)
+class Crop(Region):
+    """The part of the image that gets exported; at most one per document.
+
+    Non-destructive like everything else: the image and the annotations
+    keep their coordinates, and the exporter cuts the output to this
+    rectangle. Hit on the frame only, so the shapes inside stay clickable.
+    """
+    PROPS = ()
+
+    def hit(self, x, y, tolerance):
+        bx, by, w, h = self.bounds()
+        t = tolerance
+        inside_outer = bx - t <= x <= bx + w + t and by - t <= y <= by + h + t
+        inside_inner = bx + t < x < bx + w - t and by + t < y < by + h - t
+        return inside_outer and not inside_inner
+
+    def clamp(self, width, height):
+        """Keep the frame on the image."""
+        self.normalize()
+        self.x1, self.x2 = max(0.0, self.x1), min(float(width), self.x2)
+        self.y1, self.y2 = max(0.0, self.y1), min(float(height), self.y2)
+
+
+@dataclass(eq=False)
 class Text(Annotation):
     """A run of text anchored at its top-left corner.
 

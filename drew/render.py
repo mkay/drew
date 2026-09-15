@@ -21,8 +21,8 @@ gi.require_version("PangoCairo", "1.0")
 from gi.repository import Pango, PangoCairo
 
 from drew.filters import region_surface
-from drew.model import (Arrow, Blur, Ellipse, Highlighter, Line, Marker,
-                        Rect, Spotlight, Text)
+from drew.model import (Arrow, Blur, Crop, Ellipse, Highlighter, Line,
+                        Marker, Rect, Spotlight, Text)
 
 FONT_FAMILY = "Sans Bold"
 
@@ -30,7 +30,10 @@ FONT_FAMILY = "Sans Bold"
 def render(cr, doc):
     """Image, then blur/pixelate regions, then the dim layer with holes for
     highlights, then everything drawn on top in z order. Regions act on the
-    image, so they always sit below the shapes regardless of list order."""
+    image, so they always sit below the shapes regardless of list order.
+
+    The crop frame is not drawn: the exporter sizes its surface to it, and
+    the canvas shades what lies outside as `draw_crop_shade` does."""
     cr.set_source_surface(doc.surface, 0, 0)
     cr.paint()
     for a in doc.annotations:
@@ -40,8 +43,24 @@ def render(cr, doc):
     if spots:
         _draw_dim(cr, spots, doc)
     for a in doc.annotations:
-        if not isinstance(a, (Blur, Spotlight)):
+        if not isinstance(a, (Blur, Spotlight, Crop)):
             draw_annotation(cr, a)
+
+
+def draw_crop_shade(cr, doc):
+    """Darken what the crop frame leaves out and outline the frame. UI, not
+    output — the canvas calls it after `render`."""
+    crop = doc.crop
+    if crop is None:
+        return
+    cr.save()
+    cr.new_path()
+    cr.rectangle(0, 0, doc.width, doc.height)
+    cr.rectangle(*crop.bounds())
+    cr.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+    cr.set_source_rgba(0, 0, 0, 0.5)
+    cr.fill()
+    cr.restore()
 
 
 def _draw_blur(cr, a, doc):

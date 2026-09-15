@@ -11,8 +11,8 @@
   <description>
     <p>
       Open an image or pipe one in and add arrows, shapes, text, numbered
-      markers, spotlight, blur and pixelate. Everything stays movable and
-      resizable until you save.
+      markers, spotlight, blur and pixelate, or crop it. Everything stays
+      movable and resizable until you save.
     </p>
     <p>
       Drew captures nothing itself — it takes its image from grim, wl-paste

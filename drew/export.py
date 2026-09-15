@@ -26,17 +26,18 @@ def render_to_pixbuf(doc, fmt="png"):
     # render onto an opaque surface (white behind any transparency) and let
     # pixbuf_get_from_surface produce an RGB pixbuf from it.
     opaque = fmt == "jpeg"
+    x, y, width, height = doc.output_bounds()
     surface = cairo.ImageSurface(
-        cairo.FORMAT_RGB24 if opaque else cairo.FORMAT_ARGB32,
-        doc.width, doc.height,
-    )
+        cairo.FORMAT_RGB24 if opaque else cairo.FORMAT_ARGB32, width, height)
     cr = cairo.Context(surface)
     if opaque:
         cr.set_source_rgb(1, 1, 1)
         cr.paint()
+    # The crop frame, if any, becomes the origin.
+    cr.translate(-x, -y)
     render(cr, doc)
     surface.flush()
-    return Gdk.pixbuf_get_from_surface(surface, 0, 0, doc.width, doc.height)
+    return Gdk.pixbuf_get_from_surface(surface, 0, 0, width, height)
 
 
 def copy_to_clipboard(doc, clipboard):

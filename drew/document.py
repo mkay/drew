@@ -21,7 +21,7 @@ gi.require_version("Gdk", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import Gdk, GdkPixbuf, Gio, GLib
 
-from drew.model import Marker, Region
+from drew.model import Crop, Marker, Region
 
 
 class Document:
@@ -35,7 +35,30 @@ class Document:
         self.annotations = []
 
     def add(self, annotation):
+        if isinstance(annotation, Crop):
+            # Drawing a new frame replaces the old; there is only one output.
+            self.annotations = [a for a in self.annotations
+                                if not isinstance(a, Crop)]
         self.annotations.append(annotation)
+
+    @property
+    def crop(self):
+        return next((a for a in self.annotations if isinstance(a, Crop)), None)
+
+    def output_bounds(self):
+        """(x, y, w, h) of the exported image, in whole pixels: the crop
+        frame clipped to the image, or the whole image without one (or with
+        one dragged off it entirely)."""
+        crop = self.crop
+        if crop is None:
+            return 0, 0, self.width, self.height
+        x, y, w, h = crop.bounds()
+        x0, y0 = max(0, int(round(x))), max(0, int(round(y)))
+        x1 = min(self.width, int(round(x + w)))
+        y1 = min(self.height, int(round(y + h)))
+        if x1 <= x0 or y1 <= y0:
+            return 0, 0, self.width, self.height
+        return x0, y0, x1 - x0, y1 - y0
 
     def remove(self, annotation):
         self.annotations.remove(annotation)

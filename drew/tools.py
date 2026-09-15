@@ -16,9 +16,9 @@ import gi
 gi.require_version("Gdk", "4.0")
 from gi.repository import Gdk
 
-from drew.model import (Arrow, Blur, Ellipse, Highlighter, Line, Marker,
-                        Pixelate, Rect, Spotlight, Text, constrain_angle,
-                        constrain_square)
+from drew.model import (Arrow, Blur, Crop, Ellipse, Highlighter, Line,
+                        Marker, Pixelate, Rect, Spotlight, Text,
+                        constrain_angle, constrain_square)
 
 #: Radius around a handle, in widget pixels, that counts as grabbing it.
 HANDLE_GRAB_PX = 8
@@ -101,6 +101,8 @@ class SelectTool(Tool):
         selected = self.canvas.selection
         if self._mode == "resize" and isinstance(selected, Rect):
             selected.normalize()
+        if self._mode is not None and isinstance(selected, Crop):
+            selected.clamp(self.doc.width, self.doc.height)
         changed = self._mode is not None and (x, y) != self._press
         self._mode = self._handle = None
         return changed
@@ -153,6 +155,8 @@ class ShapeTool(Tool):
             return False
         if isinstance(shape, Rect):
             shape.normalize()
+        if isinstance(shape, Crop):
+            shape.clamp(self.doc.width, self.doc.height)
         self.canvas.request_tool("select")
         return True
 
@@ -184,6 +188,10 @@ class BlurTool(RectTool):
 
 class PixelateTool(RectTool):
     shape = Pixelate
+
+
+class CropTool(RectTool):
+    shape = Crop
 
 
 class ArrowTool(ShapeTool):
@@ -251,4 +259,5 @@ TOOLS = {
     "spotlight": SpotlightTool,
     "blur": BlurTool,
     "pixelate": PixelateTool,
+    "crop": CropTool,
 }

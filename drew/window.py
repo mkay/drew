@@ -28,6 +28,7 @@ TOOLS = [
     ("spotlight", "drew-tool-spotlight-symbolic", _("Spotlight (S)")),
     ("blur", "drew-tool-blur-symbolic", _("Blur (B)")),
     ("pixelate", "drew-tool-pixelate-symbolic", _("Pixelate (P)")),
+    ("crop", "drew-tool-crop-symbolic", _("Crop (C)")),
 ]
 
 #: Height of the header bar, for sizing the window to the image.
@@ -272,11 +273,15 @@ class Window(Adw.ApplicationWindow):
         selected, what the active tool is about to draw."""
         selection = self.canvas.selection
         if selection is not None:
-            self._style.show_for(selection.props(), selection.style)
-            return
-        shape = TOOL_CLASSES[self.lookup_action("tool").get_state().get_string()].shape
-        props = shape.props() if shape else ("stroke", "width", "fill")
-        self._style.show_for(props, self.canvas.style)
+            props, style = selection.props(), selection.style
+        else:
+            shape = TOOL_CLASSES[self.lookup_action("tool").get_state().get_string()].shape
+            props = shape.props() if shape else ("stroke", "width", "fill")
+            style = self.canvas.style
+        # Nothing to adjust (the crop frame): no button rather than an
+        # empty popover.
+        self._style.set_visible(bool(props))
+        self._style.show_for(props, style)
 
     def _on_history_changed(self, canvas):
         self.lookup_action("undo").set_enabled(canvas.history.can_undo)
@@ -308,6 +313,9 @@ class Window(Adw.ApplicationWindow):
             return True
         if keyval == Gdk.KEY_Escape and self.canvas.selection is not None:
             self.canvas.select(None)
+            return True
+        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter) and self.canvas.framing():
+            self.canvas.apply_crop()
             return True
         return False
 

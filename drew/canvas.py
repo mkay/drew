@@ -14,8 +14,8 @@ from gi.repository import Gdk, Gio, GLib, GObject, Gtk
 
 from drew.history import History
 from drew.i18n import _
-from drew.model import Spotlight, Style, Text
-from drew.render import measure_text, render
+from drew.model import Crop, Spotlight, Style, Text
+from drew.render import draw_crop_shade, measure_text, render
 from drew.tools import HIT_PX, TOOLS
 
 #: Space between the image and the widget edge, in logical pixels.
@@ -122,6 +122,7 @@ class Canvas(Gtk.DrawingArea):
     def set_tool(self, name):
         self.tool = TOOLS[name](self)
         self.set_cursor_from_name(self.tool.cursor)
+        self._view_changed()
 
     def request_tool(self, name):
         self.emit("tool-request", name)
@@ -131,7 +132,7 @@ class Canvas(Gtk.DrawingArea):
             return
         self.selection = annotation
         self.emit("selection-changed")
-        self.queue_draw()
+        self._view_changed()
 
     def changed(self):
         """Something in the document moved; repaint."""
@@ -142,6 +143,12 @@ class Canvas(Gtk.DrawingArea):
         self.history.commit(self.doc.annotations)
         self.emit("history-changed")
         self.queue_draw()
+
+    def apply_crop(self):
+        """Leave the crop frame: deselect it and go back to Select, so the
+        view shows what will be saved. Nothing to do without a frame."""
+        self.select(None)
+        self.request_tool("select")
 
     def undo(self):
         self._restore(self.history.undo())
@@ -157,7 +164,7 @@ class Canvas(Gtk.DrawingArea):
         self.doc.renumber_markers()
         self.select(next((a for a in annotations if a.id == selected_id), None))
         self.emit("history-changed")
-        self.queue_draw()
+        self._view_changed()
 
     def apply_style(self, **changes):
         """Change the current style, and the selected shape's if any.
@@ -223,7 +230,32 @@ class Canvas(Gtk.DrawingArea):
         self.selection.move(dx, dy)
         self.commit()
 
-    # ----------------------------------------------------------------- zoom
+    # ----------------------------------------------------------------- view
+
+    def framing(self):
+        """True while the crop frame is being placed — the crop tool is
+        active or the frame is selected. Then the whole image is shown with
+        the outside shaded; otherwise the view is cut to the frame, as the
+        saved image will be."""
+        return (self.tool.shape is Crop
+                or isinstance(self.selection, Crop))
+
+    def view_bounds(self):
+        """(x, y, w, h) of the image shown, in image pixels."""
+        if self.doc is None:
+            return 0, 0, 1, 1
+        if self.framing():
+            return 0, 0, self.doc.width, self.doc.height
+        return self.doc.output_bounds()
+
+    def _view_changed(self):
+        """The visible part of the image may have changed: size the widget
+        for it and repaint."""
+        if self.doc is not None and self.zoom is not None:
+            _x, _y, w, h = self.view_bounds()
+            self.set_content_width(int(w * self.zoom) + 2 * MARGIN)
+            self.set_content_height(int(h * self.zoom) + 2 * MARGIN)
+        self.queue_draw()
 
     def set_zoom(self, zoom, anchor=None):
         """Set the scale factor, or None to fit; keep `anchor` (widget
@@ -233,8 +265,7 @@ class Canvas(Gtk.DrawingArea):
         image_point = self.to_image(*anchor) if anchor else None
         self.zoom = zoom
         if self.doc is not None and zoom is not None:
-            self.set_content_width(int(self.doc.width * zoom) + 2 * MARGIN)
-            self.set_content_height(int(self.doc.height * zoom) + 2 * MARGIN)
+            self._view_changed()
         else:
             self.set_content_width(0)
             self.set_content_height(0)
@@ -294,10 +325,14 @@ class Canvas(Gtk.DrawingArea):
 
     def to_image(self, x, y):
         """Widget coordinates → image coordinates."""
-        return (x - self.offset_x) / self.scale, (y - self.offset_y) / self.scale
+        vx, vy, _w, _h = self.view_bounds()
+        return ((x - self.offset_x) / self.scale + vx,
+                (y - self.offset_y) / self.scale + vy)
 
     def to_widget(self, x, y):
-        return x * self.scale + self.offset_x, y * self.scale + self.offset_y
+        vx, vy, _w, _h = self.view_bounds()
+        return ((x - vx) * self.scale + self.offset_x,
+                (y - vy) * self.scale + self.offset_y)
 
     # ---------------------------------------------------------------- input
 
@@ -350,6 +385,7 @@ class Canvas(Gtk.DrawingArea):
     # ------------------------------------------------------------- painting
 
     def _fit(self, width, height):
+        _x, _y, view_w, view_h = self.view_bounds()
         if self.zoom is not None:
             self.scale = self.zoom
         else:
@@ -357,26 +393,46 @@ class Canvas(Gtk.DrawingArea):
             # stays crisp and its pixels stay honest for blur/pixelate.
             avail_w = max(1, width - 2 * MARGIN)
             avail_h = max(1, height - 2 * MARGIN)
-            self.scale = min(1.0, avail_w / self.doc.width,
-                             avail_h / self.doc.height)
+            self.scale = min(1.0, avail_w / view_w, avail_h / view_h)
         # Centred while smaller than the viewport; once larger, the widget
         # itself is larger (content size) and the scrolled window pans it.
-        self.offset_x = max(MARGIN, (width - self.doc.width * self.scale) / 2)
-        self.offset_y = max(MARGIN, (height - self.doc.height * self.scale) / 2)
+        self.offset_x = max(MARGIN, (width - view_w * self.scale) / 2)
+        self.offset_y = max(MARGIN, (height - view_h * self.scale) / 2)
 
     def _draw(self, _area, cr, width, height):
         if self.doc is None:
             return
         self._fit(width, height)
+        vx, vy, view_w, view_h = self.view_bounds()
         cr.save()
         cr.translate(self.offset_x, self.offset_y)
         cr.scale(self.scale, self.scale)
-        cr.rectangle(0, 0, self.doc.width, self.doc.height)
+        cr.rectangle(0, 0, view_w, view_h)
         cr.clip()
+        cr.translate(-vx, -vy)
         render(cr, self.doc)
+        if self.framing():
+            draw_crop_shade(cr, self.doc)
         cr.restore()
+        if self.framing() and self.doc.crop is not None:
+            self._draw_frame(cr, self.doc.crop)
         if self.selection is not None:
             self._draw_handles(cr, self.selection)
+
+    def _draw_frame(self, cr, crop):
+        # A one-pixel line in widget space, white over dark so it reads on
+        # any image; the shade already marks which side is out.
+        x, y, w, h = crop.bounds()
+        wx, wy = self.to_widget(x, y)
+        cr.rectangle(round(wx) + 0.5, round(wy) + 0.5,
+                     round(w * self.scale), round(h * self.scale))
+        cr.set_line_width(1.0)
+        cr.set_source_rgba(0, 0, 0, 0.6)
+        cr.stroke_preserve()
+        cr.set_dash([4.0, 4.0])
+        cr.set_source_rgba(1, 1, 1, 0.9)
+        cr.stroke()
+        cr.set_dash([])
 
     def _draw_handles(self, cr, annotation):
         # Drawn in widget space so handles keep their size at any zoom.

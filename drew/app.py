@@ -81,6 +81,7 @@ class Application(Adw.Application):
         self.set_accels_for_action("win.tool('spotlight')", ["s"])
         self.set_accels_for_action("win.tool('blur')", ["b"])
         self.set_accels_for_action("win.tool('pixelate')", ["p"])
+        self.set_accels_for_action("win.tool('crop')", ["c"])
         self.set_accels_for_action("win.preferences", ["<Control>comma"])
         self.set_accels_for_action("win.copy", ["<Control>c"])
         self.set_accels_for_action("win.undo", ["<Control>z"])

@@ -31,6 +31,7 @@ ICONS = {
     "tool-spotlight": "flashlight",
     "tool-blur": "drop-half",
     "tool-pixelate": "grid-four",
+    "tool-crop": "crop",
     "save": "floppy-disk",
     "copy": "copy",
     "menu": "list",

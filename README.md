@@ -6,7 +6,7 @@ Image annotation for Wayland. Bells and whistles included.
 
 ![Drew Icon](data/de.singular.drew.svg)
 
-Open an image or pipe one in and add arrows, shapes, text, numbered markers, spotlight, blur and pixelate. Everything stays movable and resizable until you save.
+Open an image or pipe one in and add arrows, shapes, text, numbered markers, spotlight, blur and pixelate, or crop it. Everything stays movable and resizable until you save.
 
 Drew captures nothing itself — it takes its image from grim, wl-paste or any other tool. Built with GTK4 and libadwaita.
 
@@ -36,6 +36,7 @@ Without `-o`, Ctrl+S writes `~/Pictures/screenshot-YYYYMMDD-HHMMSS.png` — fold
 | S | Spotlight — everything outside the region is dimmed; several regions combine |
 | B | Blur |
 | P | Pixelate |
+| C | Crop — drag a frame, Return (or a click outside it) applies; while the frame is selected it moves and resizes like any shape, draw a new one to replace it, delete it to get the whole image back |
 
 Delete removes the selection, Esc deselects, arrow keys nudge (Shift = 10 px). Page Up / Page Down raise or lower the selected shape one step, Home / End bring it to the front or send it to the back; the same is in the right-click menu on a shape. Ctrl+Z / Ctrl+Shift+Z undo and redo, Ctrl+C copies the annotated image to the clipboard. Ctrl+scroll zooms around the pointer, Ctrl+plus/minus step, Ctrl+1 is actual size, Ctrl+0 fits the window again; middle-drag pans. The swatch button holds the properties of whatever is selected — or of the tool about to draw: colour and line width for arrows and lines, fill for rectangles and ellipses, text size, marker size, highlighter opacity, spotlight dim, blur radius, pixelate block size. Changing a value restyles the selection and becomes the default for the next shape. Fill turns rectangles and ellipses solid and puts text on a rounded chip.
 
