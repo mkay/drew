@@ -32,6 +32,11 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.0" date="2026-09-15">
+      <description>
+        <p>Crop tool: draw a frame, adjust it like any shape, Return applies. The numbered marker tool stays active between clicks.</p>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-09-15">
       <description>
         <p>Initial skeleton: open an image from a file or stdin, save as PNG.</p>
