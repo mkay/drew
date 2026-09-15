@@ -54,6 +54,14 @@ pacman -S python python-gobject python-cairo python-pillow gtk4 libadwaita gdk-p
 makepkg -sic
 ```
 
+### Debian / Ubuntu
+
+```bash
+sudo apt install ./drew_*.deb
+```
+
+Needs libadwaita 1.7 or newer (Debian 13 "trixie", Ubuntu 25.04 and later).
+
 ### From source
 
 ```bash
@@ -62,9 +70,17 @@ meson compile -C builddir
 sudo meson install -C builddir
 ```
 
+### Build a .deb package from source
+
+Requires [nfpm](https://nfpm.goreleaser.com) in addition to meson and ninja. The package is written to the repository root and named after the version in `meson.build`.
+
+```bash
+./build-deb.sh
+```
+
 ## Releasing
 
-`./release.sh <version> [title]` bumps `meson.build` and `PKGBUILD`, tags, pushes to both remotes, builds the Arch package against the GitHub tarball, publishes GitHub and Forgejo releases with it attached, and updates the AUR. The metainfo must already carry a `<release>` entry for the version, committed. The Forgejo step needs a token in the keyring: `secret-tool store --label='Forgejo release token' service forgejo host git.singular.de`.
+`./release.sh <version> [title]` bumps `meson.build` and `PKGBUILD`, tags, pushes to both remotes, builds the Arch package against the GitHub tarball and the .deb, publishes GitHub and Forgejo releases with both attached, and updates the AUR. The metainfo must already carry a `<release>` entry for the version, committed. The Forgejo step needs a token in the keyring: `secret-tool store --label='Forgejo release token' service forgejo host git.singular.de`.
 
 ## Configuration
 

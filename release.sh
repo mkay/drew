@@ -1,7 +1,7 @@
 #!/bin/bash
-# Cut a release: bump versions, tag, push, build the Arch package, publish on
-# GitHub and Forgejo, update the AUR. Ported from stenmark's release.sh minus
-# what Drew doesn't have (what's-new dialog, .deb build).
+# Cut a release: bump versions, tag, push, build the Arch and Debian
+# packages, publish on GitHub and Forgejo, update the AUR. Ported from
+# stenmark's release.sh minus the what's-new dialog check.
 set -euo pipefail
 
 VERSION="${1:-}"
@@ -143,8 +143,14 @@ if ! git diff --quiet PKGBUILD; then
     done
 fi
 
-# 6. Create releases
-RELEASE_ASSETS=("$ARCH_PKG")
+# 6. Build .deb package
+# build-deb.sh owns the whole deb recipe — staging, metadata and the runtime
+# dependency list — so it exists in exactly one place and cannot drift from
+# what a from-source build produces. It prints the artifact path.
+DEB_PKG=$(./build-deb.sh "$VERSION")
+
+# 7. Create releases
+RELEASE_ASSETS=("$ARCH_PKG" "$DEB_PKG")
 
 # GitHub release — the GitHub repo is one of origin's push URLs, so look
 # at those rather than at the fetch URL.
@@ -229,7 +235,7 @@ if [[ -n "$FORGEJO_URL" && -n "${FORGEJO_TOKEN:-}" ]]; then
     fi
 fi
 
-# 7. Push to AUR
+# 8. Push to AUR
 echo "==> Pushing to AUR"
 makepkg --printsrcinfo > .SRCINFO
 AUR_DIR=$(mktemp -d)
