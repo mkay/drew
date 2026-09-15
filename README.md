@@ -2,6 +2,8 @@
 
 Image annotation for Wayland. Bells and whistles included.
 
+> Early-stage release — expect rough edges. Feedback and bug reports welcome via Issues.
+
 ![Drew Icon](data/de.singular.drew.svg)
 
 Open an image or pipe one in and add arrows, shapes, text, numbered markers, spotlight, blur and pixelate. Everything stays movable and resizable until you save.
@@ -35,18 +37,59 @@ Without `-o`, Ctrl+S writes `~/Pictures/screenshot-YYYYMMDD-HHMMSS.png` — fold
 
 Delete removes the selection, Esc deselects, arrow keys nudge (Shift = 10 px). Page Up / Page Down raise or lower the selected shape one step, Home / End bring it to the front or send it to the back; the same is in the right-click menu on a shape. Ctrl+Z / Ctrl+Shift+Z undo and redo, Ctrl+C copies the annotated image to the clipboard. Ctrl+scroll zooms around the pointer, Ctrl+plus/minus step, Ctrl+1 is actual size, Ctrl+0 fits the window again; middle-drag pans. The swatch button holds the properties of whatever is selected — or of the tool about to draw: colour and line width for arrows and lines, fill for rectangles and ellipses, text size, marker size, highlighter opacity, spotlight dim, blur radius, pixelate block size. Changing a value restyles the selection and becomes the default for the next shape. Fill turns rectangles and ellipses solid and puts text on a rounded chip.
 
-## Building
+## Dependencies
 
-    meson setup builddir
-    meson compile -C builddir
-    meson install -C builddir
+- Python 3.10+
+- GTK 4, libadwaita 1.7+
+- PyGObject, pycairo, gdk-pixbuf
+- Pillow (blur and pixelate)
+- Meson, Ninja, gettext (build)
 
-Runs from the source tree without installing: `python -m drew` after `meson setup` has generated `drew/__init__.py` — copy it from `builddir/drew/__init__.py` or run the installed launcher.
+## Install
 
-Dependencies: Python 3, PyGObject, GTK 4, libadwaita ≥ 1.7, gdk-pixbuf, pycairo, Pillow.
+### Arch Linux
 
-Icons are [Phosphor Icons](https://phosphoricons.com/) (MIT), bundled under `drew/data/icons/`; `scripts/extract-phosphor.py` regenerates them from the Phosphor release zip.
+```bash
+pacman -S python python-gobject python-cairo python-pillow gtk4 libadwaita gdk-pixbuf2 meson ninja
+makepkg -sic
+```
+
+### From source
+
+```bash
+meson setup builddir --prefix=/usr
+meson compile -C builddir
+sudo meson install -C builddir
+```
+
+## Configuration
+
+Settings are stored in `~/.config/drew/settings.json` and can be changed from the Preferences dialog (Ctrl+,): the folder Save writes to and the file name prefix. The last-used colour, sizes and amounts are remembered as well.
+
+## Troubleshooting
+
+If you encounter issues or crashes, debug output can be enabled by running the following command in your terminal:
+
+```bash
+G_MESSAGES_DEBUG=all PYTHONUNBUFFERED=1 drew
+```
 
 ## License
 
-GPL-3.0-only. Phosphor Icons are MIT.
+GPL-3.0-**only** — version 3 of the GNU General Public License, and not "or any later version".
+The full text is in [LICENSE](LICENSE), the copyright notice in [COPYRIGHT](COPYRIGHT).
+
+### Artwork and name
+
+The application icon is licensed separately, under **CC BY 4.0**.
+[COPYRIGHT](COPYRIGHT) lists the files.
+
+The **name** is not licensed by either grant — give a fork its own.
+
+## Credits
+
+Drew bundles [Phosphor Icons](https://phosphoricons.com/) (MIT) for the toolbar — GPL-compatible; [COPYRIGHT](COPYRIGHT) has the details. `scripts/extract-phosphor.py` regenerates them from the Phosphor release zip.
+
+## Disclaimer
+
+This project was developed with AI assistance. Use at your own discretion.
