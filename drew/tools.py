@@ -221,7 +221,10 @@ class TextTool(Tool):
 
 
 class MarkerTool(Tool):
-    """Click to drop the next number; drag to place it before letting go."""
+    """Click to drop the next number; drag to place it before letting go.
+
+    Stays active, unlike the shape tools: markers come in series, and the
+    one just placed is selected, so it can still be nudged or deleted."""
     cursor = "crosshair"
     shape = Marker
 
@@ -243,7 +246,6 @@ class MarkerTool(Tool):
 
     def release(self, x, y, mods):
         self._current = None
-        self.canvas.request_tool("select")
         return True
 
 

@@ -31,7 +31,7 @@ Without `-o`, Ctrl+S writes `~/Pictures/screenshot-YYYYMMDD-HHMMSS.png` — fold
 | R / 4 | Rectangle (Shift for square) |
 | E / 5 | Ellipse (Shift for circle) |
 | T / 6 | Text |
-| M / 7 | Numbered marker — each click drops the next number |
+| M / 7 | Numbered marker — each click drops the next number; the tool stays active |
 | H | Highlighter — translucent wash in the current colour, marker-pen style |
 | S | Spotlight — everything outside the region is dimmed; several regions combine |
 | B | Blur |
