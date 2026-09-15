@@ -63,6 +63,26 @@ class Swatch(Gtk.DrawingArea):
         cr.stroke()
 
 
+class ColourBar(Gtk.DrawingArea):
+    """The stripe under the style button: current colour, word-processor
+    style. Hidden where the context has no colour."""
+
+    def __init__(self, rgba):
+        super().__init__(content_width=16, content_height=3,
+                         halign=Gtk.Align.CENTER)
+        self.rgba = rgba
+        self.set_draw_func(self._draw)
+
+    def set_rgba(self, rgba):
+        self.rgba = rgba
+        self.queue_draw()
+
+    def _draw(self, _area, cr, w, h):
+        cr.rectangle(0, 0, w, h)
+        cr.set_source_rgba(*self.rgba)
+        cr.fill()
+
+
 class StyleButton(Gtk.MenuButton):
     """One popover for every adjustable property.
 
@@ -88,9 +108,13 @@ class StyleButton(Gtk.MenuButton):
 
     def __init__(self, style):
         super().__init__(tooltip_text=_("Colour and Size"),
-                         valign=Gtk.Align.CENTER)
-        self._swatch = Swatch(style.stroke)
-        self.set_child(self._swatch)
+                         valign=Gtk.Align.CENTER, always_show_arrow=True)
+        # Icon with a colour stripe beneath: "adjust", and which colour.
+        self._swatch = ColourBar(style.stroke)
+        child = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+        child.append(Gtk.Image(icon_name="drew-style-symbolic"))
+        child.append(self._swatch)
+        self.set_child(child)
         #: True while show_for() sets widgets; handlers stay quiet.
         self._updating = False
         #: Row widgets by property name, for show/hide.
@@ -177,6 +201,7 @@ class StyleButton(Gtk.MenuButton):
             for name, row in self._rows.items():
                 row.set_visible(name in props)
             self._swatch.set_rgba(style.stroke)
+            self._swatch.set_visible("stroke" in props)
             for prop, scale in self._scales.items():
                 scale.set_value(getattr(style, prop))
             self._fill.set_active(style.fill is not None)

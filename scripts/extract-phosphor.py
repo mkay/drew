@@ -36,6 +36,7 @@ ICONS = {
     "menu": "list",
     "folder": "folder-open",
     "image": "image",
+    "style": "sliders-horizontal",
 }
 
 FONT = "Fonts/bold/Phosphor-Bold.svg"
