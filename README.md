@@ -10,6 +10,8 @@ Open an image or pipe one in and add arrows, shapes, text, numbered markers, spo
 
 Drew captures nothing itself — it takes its image from grim, wl-paste or any other tool. Built with GTK4 and libadwaita.
 
+![Drew annotating its own README](assets/screenshot.png)
+
 ## Usage
 
     drew image.png
