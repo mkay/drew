@@ -62,6 +62,10 @@ meson compile -C builddir
 sudo meson install -C builddir
 ```
 
+## Releasing
+
+`./release.sh <version> [title]` bumps `meson.build` and `PKGBUILD`, tags, pushes to both remotes, builds the Arch package against the GitHub tarball, publishes GitHub and Forgejo releases with it attached, and updates the AUR. The metainfo must already carry a `<release>` entry for the version, committed. The Forgejo step needs a token in the keyring: `secret-tool store --label='Forgejo release token' service forgejo host git.singular.de`.
+
 ## Configuration
 
 Settings are stored in `~/.config/drew/settings.json` and can be changed from the Preferences dialog (Ctrl+,): the folder Save writes to and the file name prefix. The last-used colour, sizes and amounts are remembered as well.
