@@ -96,9 +96,11 @@ class StyleButton(Gtk.MenuButton):
         #: Row widgets by property name, for show/hide.
         self._rows = {}
 
+        # Width is set explicitly: with a single slider visible the box
+        # would otherwise shrink to the width of its label.
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
                       margin_top=6, margin_bottom=6,
-                      margin_start=6, margin_end=6)
+                      margin_start=6, margin_end=6, width_request=280)
 
         palette = Gtk.Box(spacing=4)
         for rgba in PALETTE:
