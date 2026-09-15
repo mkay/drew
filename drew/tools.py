@@ -211,11 +211,7 @@ class TextTool(Tool):
 
 
 class MarkerTool(Tool):
-    """Click to drop the next number; drag to place it before letting go.
-
-    Stays active after a click: markers come in runs (1, 2, 3, …), so
-    handing back to Select after each one would be a chore.
-    """
+    """Click to drop the next number; drag to place it before letting go."""
     cursor = "crosshair"
 
     def __init__(self, canvas):
@@ -236,6 +232,7 @@ class MarkerTool(Tool):
 
     def release(self, x, y, mods):
         self._current = None
+        self.canvas.request_tool("select")
         return True
 
 
