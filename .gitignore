@@ -1,0 +1,11 @@
+builddir/
+__pycache__/
+drew/__init__.py
+*.pkg.tar.zst
+*.tar.gz
+*.deb
+build/
+pkg/
+src/
+PKGBUILD.local
+.SRCINFO

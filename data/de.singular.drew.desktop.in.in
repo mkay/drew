@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Drew
+Comment=Annotate screenshots
+Exec=@BIN@ %f
+Icon=de.singular.drew
+Terminal=false
+Categories=Graphics;2DGraphics;RasterGraphics;
+Keywords=screenshot;annotate;annotation;arrow;blur;markup;
+MimeType=image/png;image/jpeg;image/webp;
+StartupNotify=true

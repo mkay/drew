@@ -1,0 +1,9 @@
+data/de.singular.drew.desktop.in.in
+data/de.singular.drew.metainfo.xml.in
+drew/app.py
+drew/window.py
+drew/canvas.py
+drew/export.py
+drew/tools.py
+drew/preferences.py
+drew/stylebox.py

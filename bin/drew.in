@@ -1,0 +1,16 @@
+#!@PYTHON@
+# SPDX-FileCopyrightText: 2026 Kreuder <mk@singular.de>
+# SPDX-License-Identifier: GPL-3.0-only
+
+import os
+import sys
+import signal
+
+pkgdatadir = '@pkgdatadir@'
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+sys.path.insert(0, pkgdatadir)
+
+from drew.__main__ import main
+
+sys.exit(main())

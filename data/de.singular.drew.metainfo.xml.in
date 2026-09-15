@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>de.singular.drew</id>
+
+  <name>Drew</name>
+  <summary>Annotate screenshots</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+
+  <description>
+    <p>
+      Drew is a Wayland-native image annotation tool for screenshots. It does
+      not capture anything itself; pipe it an image from grim, wl-paste or any
+      other tool and mark it up.
+    </p>
+    <p>
+      Every annotation stays an object until you save: draw an arrow, then
+      move or resize it. Shapes, numbered markers, highlight-by-dimming and
+      blur or pixelate for anything that should not be shared.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">de.singular.drew.desktop</launchable>
+
+  <url type="homepage">https://github.com/mkay/drew</url>
+
+  <developer id="de.singular">
+    <name>Kreuder</name>
+  </developer>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.1.0" date="2026-09-15">
+      <description>
+        <p>Initial skeleton: open an image from a file or stdin, save as PNG.</p>
+      </description>
+    </release>
+  </releases>
+</component>

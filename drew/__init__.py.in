@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Kreuder <mk@singular.de>
+# SPDX-License-Identifier: GPL-3.0-only
+
+APP_ID = "de.singular.drew"
+APP_NAME = "Drew"
+VERSION = "@VERSION@"
+LOCALEDIR = "@localedir@"
