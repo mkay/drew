@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Drew
-Comment=Annotate screenshots
+Comment=Image annotation for Wayland. Bells and whistles included
 Exec=@BIN@ %f
 Icon=de.singular.drew
 Terminal=false

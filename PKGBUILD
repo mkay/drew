@@ -2,7 +2,7 @@
 pkgname=drew
 pkgver=0.1.0
 pkgrel=1
-pkgdesc='Wayland-native screenshot annotation: movable arrows, shapes, markers, spotlight, blur'
+pkgdesc='Image annotation for Wayland. Bells and whistles included'
 arch=('any')
 url='https://github.com/mkay/drew'
 license=('GPL-3.0-only')

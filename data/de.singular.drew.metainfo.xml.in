@@ -3,21 +3,21 @@
   <id>de.singular.drew</id>
 
   <name>Drew</name>
-  <summary>Annotate screenshots</summary>
+  <summary>Image annotation for Wayland. Bells and whistles included</summary>
 
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
 
   <description>
     <p>
-      Drew is a Wayland-native image annotation tool for screenshots. It does
-      not capture anything itself; pipe it an image from grim, wl-paste or any
-      other tool and mark it up.
+      Open an image or pipe one in and add arrows, shapes, text, numbered
+      markers, spotlight, blur and pixelate. Everything stays movable and
+      resizable until you save.
     </p>
     <p>
-      Every annotation stays an object until you save: draw an arrow, then
-      move or resize it. Shapes, numbered markers, highlight-by-dimming and
-      blur or pixelate for anything that should not be shared.
+      Drew captures nothing itself — it takes its image from grim, wl-paste
+      or any other tool, on the command line or via stdin, and saves to a
+      file, to stdout or to the clipboard.
     </p>
   </description>
 

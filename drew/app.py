@@ -137,6 +137,6 @@ class Application(Adw.Application):
             version=VERSION,
             developer_name="Kreuder",
             license_type=Gtk.License.GPL_3_0_ONLY,
-            comments=_("Annotate screenshots"),
+            comments=_("Image annotation for Wayland. Bells and whistles included."),
         )
         about.present(self.get_active_window())

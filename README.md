@@ -1,8 +1,10 @@
 # Drew
 
-Wayland-native screenshot annotation for Linux, built with GTK4 and libadwaita. Drew captures nothing itself — pipe it an image from grim, wl-paste or any other tool — but every annotation stays an object until you save, so an arrow can be moved and resized after it is drawn.
+Image annotation for Wayland. Bells and whistles included.
 
-Planned tools: arrows, lines, rectangles, ellipses, text, numbered markers, highlight (dim everything else), blur and pixelate.
+Open an image or pipe one in and add arrows, shapes, text, numbered markers, spotlight, blur and pixelate. Everything stays movable and resizable until you save.
+
+Drew captures nothing itself — it takes its image from grim, wl-paste or any other tool. Built with GTK4 and libadwaita.
 
 ## Usage
 
