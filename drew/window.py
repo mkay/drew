@@ -49,6 +49,7 @@ class Window(Adw.ApplicationWindow):
         self.settings = app.settings
         #: Path from `-o`, "-" for stdout, or None → ask / timestamped file.
         self.output = output
+        self._last_saved = None
 
         # No title widget: the header is for tools and actions, and on a
         # small screenshot the title would only squeeze them.
@@ -66,8 +67,13 @@ class Window(Adw.ApplicationWindow):
         header.pack_start(self._toolbox)
 
 
-        save_button = Gtk.Button(icon_name="drew-save-symbolic",
-                                 tooltip_text=_("Save (Ctrl+S)"))
+        # The main click saves; the arrow offers the "and then" variants.
+        save_menu = Gio.Menu()
+        save_menu.append(_("Save and Show in Folder"), "win.save-show")
+        save_menu.append(_("Save and Copy Path"), "win.save-copy-path")
+        save_button = Adw.SplitButton(icon_name="drew-save-symbolic",
+                                      tooltip_text=_("Save (Ctrl+S)"),
+                                      menu_model=save_menu)
         save_button.add_css_class("suggested-action")
         save_button.set_action_name("win.save")
         header.pack_end(save_button)
@@ -81,6 +87,8 @@ class Window(Adw.ApplicationWindow):
         file = Gio.Menu()
         file.append(_("Open…"), "win.open")
         file.append(_("Save As…"), "win.save-as")
+        file.append(_("Save and Show in Folder"), "win.save-show")
+        file.append(_("Save and Copy Path"), "win.save-copy-path")
         menu.append_section(None, file)
         history = Gio.Menu()
         history.append(_("Undo"), "win.undo")
@@ -159,8 +167,8 @@ class Window(Adw.ApplicationWindow):
         self.canvas.set_document(doc)
         has_doc = doc is not None
         self._stack.set_visible_child_name("canvas" if has_doc else "empty")
-        self.lookup_action("save").set_enabled(has_doc)
-        self.lookup_action("save-as").set_enabled(has_doc)
+        for name in ("save", "save-as", "save-show", "save-copy-path"):
+            self.lookup_action(name).set_enabled(has_doc)
         self.lookup_action("copy").set_enabled(has_doc)
         for name in ("zoom-in", "zoom-out", "zoom-100", "zoom-fit"):
             self.lookup_action(name).set_enabled(has_doc)
@@ -209,6 +217,9 @@ class Window(Adw.ApplicationWindow):
             ("open", self._on_open),
             ("save", self._on_save),
             ("save-as", self._on_save_as),
+            ("save-show", lambda *_: self._on_save(after=self._show_in_folder)),
+            ("save-copy-path", lambda *_: self._on_save(after=self._copy_path)),
+            ("show-saved", lambda *_: self._show_in_folder(self._last_saved)),
             ("preferences", self._on_preferences),
             ("copy", self._on_copy),
             ("undo", lambda *_: self.canvas.undo()),
@@ -338,14 +349,15 @@ class Window(Adw.ApplicationWindow):
         except GLib.Error as e:
             self._toast(_("Could not open image: {error}").format(error=e.message))
 
-    def _on_save(self, *_args):
+    def _on_save(self, *_args, after=None):
         if self.output == "-":
             # stdout is a one-shot sink: write and leave, like a pipe expects.
             export.save_to_stdout(self.doc)
             self.close()
             return
         path = self.output or export.default_save_path(self.settings)
-        self._save_to(path)
+        if self._save_to(path) and after:
+            after(path)
 
     def _on_save_as(self, *_args):
         dialog = Gtk.FileDialog(title=_("Save Image"))
@@ -370,5 +382,25 @@ class Window(Adw.ApplicationWindow):
         except GLib.Error as e:
             self._toast(_("Could not save: {error}").format(error=e.message))
             return False
-        self._toast(_("Saved to {path}").format(path=path))
+        self._last_saved = str(path)
+        toast = Adw.Toast(title=_("Saved to {path}").format(path=path),
+                          button_label=_("Show in Folder"),
+                          action_name="win.show-saved")
+        self._toasts.add_toast(toast)
         return True
+
+    def _show_in_folder(self, path):
+        # OpenURI portal: the file manager opens with the file selected.
+        launcher = Gtk.FileLauncher(file=Gio.File.new_for_path(str(path)))
+        launcher.open_containing_folder(self, None, self._on_folder_opened)
+
+    def _on_folder_opened(self, launcher, result):
+        try:
+            launcher.open_containing_folder_finish(result)
+        except GLib.Error as e:
+            self._toast(_("Could not open folder: {error}").format(error=e.message))
+
+    def _copy_path(self, path):
+        self.get_clipboard().set_content(
+            Gdk.ContentProvider.new_for_value(str(path)))
+        self._toast(_("Path copied to clipboard"))
