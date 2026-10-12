@@ -4,6 +4,7 @@ drew/app.py
 drew/window.py
 drew/canvas.py
 drew/export.py
+drew/pin.py
 drew/tools.py
 drew/preferences.py
 drew/stylebox.py

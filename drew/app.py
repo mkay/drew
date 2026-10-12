@@ -12,6 +12,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 from drew import APP_ID, APP_NAME, VERSION
 from drew.i18n import _
 from drew.document import Document
+from drew.pin import pin_document
 from drew.settings import Settings
 from drew.window import Window
 
@@ -36,6 +37,10 @@ class Application(Adw.Application):
             "output", ord("o"), GLib.OptionFlags.NONE, GLib.OptionArg.FILENAME,
             _("Where Save writes; - for stdout (saves once, then quits)"),
             _("FILE"),
+        )
+        self.add_main_option(
+            "pin", ord("p"), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+            _("Pin the image to the screen instead of editing it"), None,
         )
         self.add_main_option(
             "version", ord("v"), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
@@ -84,6 +89,7 @@ class Application(Adw.Application):
         self.set_accels_for_action("win.tool('crop')", ["c"])
         self.set_accels_for_action("win.preferences", ["<Control>comma"])
         self.set_accels_for_action("win.copy", ["<Control>c"])
+        self.set_accels_for_action("win.pin", ["<Control>p"])
         self.set_accels_for_action("win.undo", ["<Control>z"])
         self.set_accels_for_action("win.redo", ["<Control><Shift>z", "<Control>y"])
         self.set_accels_for_action("win.zoom-in", ["<Control>plus", "<Control>equal"])
@@ -116,6 +122,13 @@ class Application(Adw.Application):
                 print(_("Cannot open {source}: {error}").format(
                     source=args[0], error=message), file=sys.stderr)
                 return 1
+
+        if options.contains("pin"):
+            if doc is None:
+                print(_("--pin needs an image."), file=sys.stderr)
+                return 1
+            pin_document(self, doc)
+            return 0
 
         Window(self, doc=doc, output=output).present()
         return 0

@@ -16,6 +16,7 @@ drew_sources = [
   'history.py',
   'i18n.py',
   'model.py',
+  'pin.py',
   'preferences.py',
   'render.py',
   'settings.py',

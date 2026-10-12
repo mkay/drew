@@ -18,6 +18,7 @@ Drew captures nothing itself — it takes its image from grim, wl-paste or any o
     grim -g "$(slurp)" - | drew -              # read from stdin
     grim - | drew - -o shot.png                # Ctrl+S writes here
     grim - | drew - -o - | wl-copy             # Ctrl+S writes to stdout and quits
+    grim -g "$(slurp)" - | drew --pin -        # pin it to the screen right away
 
 Without `-o`, Ctrl+S writes `~/Pictures/screenshot-YYYYMMDD-HHMMSS.png` — folder and prefix are configurable in Preferences (Ctrl+,); Ctrl+Shift+S asks. The input file is never overwritten.
 
@@ -40,12 +41,19 @@ Without `-o`, Ctrl+S writes `~/Pictures/screenshot-YYYYMMDD-HHMMSS.png` — fold
 
 Delete removes the selection, Esc deselects, arrow keys nudge (Shift = 10 px). Page Up / Page Down raise or lower the selected shape one step, Home / End bring it to the front or send it to the back; the same is in the right-click menu on a shape. Ctrl+Z / Ctrl+Shift+Z undo and redo, Ctrl+C copies the annotated image to the clipboard. Ctrl+scroll zooms around the pointer, Ctrl+plus/minus step, Ctrl+1 is actual size, Ctrl+0 fits the window again; middle-drag pans. The swatch button holds the properties of whatever is selected — or of the tool about to draw: colour and line width for arrows and lines, fill for rectangles and ellipses, text size, marker size, highlighter opacity, spotlight dim, blur radius, pixelate block size. Changing a value restyles the selection and becomes the default for the next shape. Fill turns rectangles and ellipses solid and puts text on a rounded chip.
 
+## Pin to Screen
+
+Ctrl+P (or Pin to Screen in the menu, or `drew --pin`) puts the image on screen by itself — no window frame, no toolbar — to drag around and see how an element would look somewhere else. Drag to move it, arrow keys nudge (Shift = 10 px), scroll changes its opacity, Esc or a double-click closes it. Pin as many as you like; they stay open after the editor closes.
+
+With [gtk4-layer-shell](https://github.com/wmww/gtk4-layer-shell) installed and a compositor that supports it (Sway, Hyprland, Wayfire, KDE and other wlroots-based ones), a pin floats above every window. Elsewhere, GNOME included, it is a borderless window; keeping it on top is up to the compositor.
+
 ## Dependencies
 
 - Python 3.10+
 - GTK 4, libadwaita 1.7+
 - PyGObject, pycairo, gdk-pixbuf
 - Pillow (blur and pixelate)
+- gtk4-layer-shell (optional; keeps pinned images on top)
 - Meson, Ninja, gettext (build)
 
 ## Install

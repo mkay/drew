@@ -11,6 +11,7 @@ from drew.i18n import _
 from drew import export
 from drew.canvas import MARGIN, Canvas
 from drew.document import Document
+from drew.pin import pin_document
 from drew.preferences import PreferencesDialog
 from drew.stylebox import StyleButton
 from drew.tools import TOOLS as TOOL_CLASSES
@@ -90,6 +91,9 @@ class Window(Adw.ApplicationWindow):
         file.append(_("Save and Show in Folder"), "win.save-show")
         file.append(_("Save and Copy Path"), "win.save-copy-path")
         menu.append_section(None, file)
+        pin = Gio.Menu()
+        pin.append(_("Pin to Screen"), "win.pin")
+        menu.append_section(None, pin)
         history = Gio.Menu()
         history.append(_("Undo"), "win.undo")
         history.append(_("Redo"), "win.redo")
@@ -170,6 +174,7 @@ class Window(Adw.ApplicationWindow):
         for name in ("save", "save-as", "save-show", "save-copy-path"):
             self.lookup_action(name).set_enabled(has_doc)
         self.lookup_action("copy").set_enabled(has_doc)
+        self.lookup_action("pin").set_enabled(has_doc)
         for name in ("zoom-in", "zoom-out", "zoom-100", "zoom-fit"):
             self.lookup_action(name).set_enabled(has_doc)
         self._tools.set_sensitive(has_doc)
@@ -222,6 +227,7 @@ class Window(Adw.ApplicationWindow):
             ("show-saved", lambda *_: self._show_in_folder(self._last_saved)),
             ("preferences", self._on_preferences),
             ("copy", self._on_copy),
+            ("pin", self._on_pin),
             ("undo", lambda *_: self.canvas.undo()),
             ("redo", lambda *_: self.canvas.redo()),
             ("zoom-in", lambda *_: self.canvas.zoom_by(1.25)),
@@ -307,6 +313,10 @@ class Window(Adw.ApplicationWindow):
     def _on_copy(self, *_args):
         export.copy_to_clipboard(self.doc, self.get_clipboard())
         self._toast(_("Copied to clipboard"))
+
+    def _on_pin(self, *_args):
+        pin_document(self.get_application(), self.doc, near=self)
+        self._toast(_("Pinned — drag to move, scroll for opacity, Esc closes"))
 
     def _on_preferences(self, *_args):
         PreferencesDialog(self.settings).present(self)

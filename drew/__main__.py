@@ -1,8 +1,17 @@
 # SPDX-FileCopyrightText: 2026 Kreuder <mk@singular.de>
 # SPDX-License-Identifier: GPL-3.0-only
 
+import ctypes
 import locale
 import sys
+
+# gtk4-layer-shell must be loaded before libwayland-client — before GTK is
+# imported — or it can't hook in. Pinned images use it to float above other
+# windows; without it they fall back to a plain borderless window.
+try:
+    ctypes.CDLL("libgtk4-layer-shell.so.0")
+except OSError:
+    pass
 
 from drew import LOCALEDIR
 from drew.i18n import GETTEXT_DOMAIN

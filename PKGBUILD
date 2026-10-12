@@ -15,6 +15,9 @@ depends=(
   'libadwaita'
   'gdk-pixbuf2'
 )
+optdepends=(
+  'gtk4-layer-shell: pinned images stay above other windows'
+)
 makedepends=(
   'meson'
   'gettext'

@@ -112,6 +112,8 @@ depends:
   - gir1.2-gtk-4.0
   - gir1.2-adw-1 (>= 1.7)
   - gir1.2-gdkpixbuf-2.0
+recommends:
+  - gir1.2-gtk4layershell-1.0
 contents:
 $CONTENTS
 NFPM
