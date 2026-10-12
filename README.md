@@ -43,9 +43,13 @@ Delete removes the selection, Esc deselects, arrow keys nudge (Shift = 10 px). P
 
 ## Pin to Screen
 
-Ctrl+P (or Pin to Screen in the menu, or `drew --pin`) puts the image on screen by itself — no window frame, no toolbar — to drag around and see how an element would look somewhere else. Drag to move it, arrow keys nudge (Shift = 10 px). Drag a corner to resize it, or use Ctrl+scroll (fine) and Ctrl+plus/minus (coarse); Ctrl+0 brings it back to 1:1. Shift+scroll changes its opacity. Esc or a double-click closes it. Pin as many as you like; they stay open after the editor closes.
+Ctrl+P (or Pin to Screen in the menu, or `drew --pin`) puts the image on screen by itself — no window frame, no toolbar — to drag around and see how an element would look somewhere else. Drag to move it, arrow keys nudge (Shift = 10 px). Drag a corner to resize it, or use Ctrl+scroll (fine) and Ctrl+plus/minus (coarse); Ctrl+0 brings it back to 1:1. Shift+scroll changes its opacity. Esc or a double-click closes it. Pin as many as you like; they stay open after the editor closes. At 1:1 a pin shows the capture's own pixels, whatever the monitor's scale.
 
 With [gtk4-layer-shell](https://github.com/wmww/gtk4-layer-shell) installed and a compositor that supports it (Sway, Hyprland, Wayfire, KDE and other wlroots-based ones), a pin floats above every window. Elsewhere, GNOME included, it is a borderless window; keeping it on top is up to the compositor.
+
+A layer-shell pin can be dragged from one monitor to another, and one left across the boundary shows on both.
+
+If captures come out with a thin dark edge, the compositor is still fading out slurp's selection border when grim takes the shot. Turn the fade off for slurp (its layer is named `selection`) — on Wayfire, for example, `fade_enabled_for = type equals "overlay" & !(app_id is "selection")` in `[animate]` — or run slurp with `-c 00000000`.
 
 ## Dependencies
 
