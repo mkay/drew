@@ -28,6 +28,14 @@ from drew.i18n import _
 OPACITY_STEP = 0.1
 #: …but never below this, so the pin can't vanish.
 MIN_OPACITY = 0.2
+#: Each zoom key scales by this, like the editor's; a scroll notch by the
+#: finer one; within these bounds.
+ZOOM_STEP = 1.25
+SCROLL_ZOOM_STEP = 1.05
+MIN_ZOOM, MAX_ZOOM = 0.1, 8.0
+#: Dragging this close to a corner resizes instead of moving — less on a
+#: small pin, so there is still somewhere to grab it to move.
+CORNER = 16
 
 CSS = """
 window.drew-pin {
@@ -62,6 +70,24 @@ def pin_document(app, doc, near=None):
     Pin(app, texture, Pin.monitor_of(near)).present()
 
 
+class _SizedPicture(Gtk.Picture):
+    """A picture that asks for exactly the size it is given. Gtk.Picture
+    asks for its image's own size; a size request can raise that but never
+    lower it, and the pin could grow but not shrink."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._size = (0, 0)
+
+    def set_size(self, width, height):
+        self._size = (width, height)
+        self.queue_resize()
+
+    def do_measure(self, orientation, _for_size):
+        size = self._size[orientation == Gtk.Orientation.VERTICAL]
+        return size, size, -1, -1
+
+
 class Pin(Gtk.Window):
     """One pinned image — or, with an `owner`, a twin showing the part of
     the owner's image that lies on another monitor.
@@ -78,16 +104,23 @@ class Pin(Gtk.Window):
                          title=_("Pinned Image"))
         _install_css()
         self.add_css_class("drew-pin")
+        # Themes, and users' own gtk.css, paint .background on every
+        # window, and user CSS outranks ours: without the class there is
+        # nothing behind the image, and a faded pin shows what lies below.
+        self.remove_css_class("background")
 
         self._texture = texture
         self._width, self._height = texture.get_width(), texture.get_height()
-        self._picture = Gtk.Picture(
-            paintable=texture, can_shrink=True,
-            content_fit=Gtk.ContentFit.FILL)
+        self._picture = _SizedPicture(
+            paintable=texture, content_fit=Gtk.ContentFit.FILL)
         self.set_child(self._picture)
         self._owner = owner
         #: Monitor → twin showing the part of this pin that lies there.
         self._twins = {}
+        #: 1 is the capture's own size; a twin shares its owner's.
+        self._zoom = owner._zoom if owner else 1.0
+        #: Where the pointer is over this pin, for zooming around it.
+        self._pointer = None
 
         # The capture is in device pixels; shown at the monitor's scale it
         # lines up pixel for pixel with what it was taken from.
@@ -110,13 +143,18 @@ class Pin(Gtk.Window):
         self.add_controller(click)
 
         scroll = Gtk.EventControllerScroll(
-            flags=Gtk.EventControllerScrollFlags.VERTICAL)
+            flags=Gtk.EventControllerScrollFlags.BOTH_AXES)
         scroll.connect("scroll", self._on_scroll)
         self.add_controller(scroll)
 
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self._on_key)
         self.add_controller(keys)
+
+        motion = Gtk.EventControllerMotion()
+        motion.connect("motion", self._on_motion)
+        motion.connect("leave", lambda _c: setattr(self, "_pointer", None))
+        self.add_controller(motion)
 
     @staticmethod
     def monitor_of(near):
@@ -129,8 +167,9 @@ class Pin(Gtk.Window):
 
     def _fit_scale(self, scale):
         self._scale = scale or 1
-        self._picture.set_size_request(round(self._width / self._scale),
-                                       round(self._height / self._scale))
+        self._picture.set_size(
+            round(self._width * self._zoom / self._scale),
+            round(self._height * self._zoom / self._scale))
 
     def _on_realize(self, _window):
         # The guess from the monitor may be off (no monitor, or the
@@ -161,19 +200,19 @@ class Pin(Gtk.Window):
             else LayerShell.KeyboardMode.ON_DEMAND)
         # Ignore panels: margins count from the monitor's edges.
         LayerShell.set_exclusive_zone(self, -1)
-        LayerShell.set_anchor(self, LayerShell.Edge.TOP, True)
-        LayerShell.set_anchor(self, LayerShell.Edge.LEFT, True)
         self._x = self._y = 0
         self._monitor = monitor
         if monitor is not None:
             LayerShell.set_monitor(self, monitor)
             self._centre_on(monitor)
-        else:
-            # The compositor picks the monitor; stay invisible until it
-            # has, rather than flash up in its top-left corner. Only the
-            # picture: a window at opacity 0 draws nothing, and a surface
-            # without content is never told which monitor it is on.
-            self._picture.set_opacity(0)
+            self._anchor()
+        # Otherwise the compositor picks the monitor, and with no anchors
+        # centres the pin on it; once it says which, anchoring takes over
+        # at that same spot.
+
+    def _anchor(self):
+        LayerShell.set_anchor(self, LayerShell.Edge.TOP, True)
+        LayerShell.set_anchor(self, LayerShell.Edge.LEFT, True)
         self._apply_margins()
 
     def _on_enter_monitor(self, surface, monitor):
@@ -182,13 +221,12 @@ class Pin(Gtk.Window):
         self._monitor = monitor
         self._fit_scale(monitor.get_scale())
         self._centre_on(monitor)
-        self._apply_margins()
-        self._picture.set_opacity(1)
+        self._anchor()
 
     def _centre_on(self, monitor):
         geometry = monitor.get_geometry()
-        self._x = (geometry.width - self._width / self._scale) // 2
-        self._y = (geometry.height - self._height / self._scale) // 2
+        self._x = (geometry.width - self._width * self._zoom / self._scale) // 2
+        self._y = (geometry.height - self._height * self._zoom / self._scale) // 2
 
     def _apply_margins(self):
         LayerShell.set_margin(self, LayerShell.Edge.LEFT, round(self._x))
@@ -198,7 +236,8 @@ class Pin(Gtk.Window):
         """The pin's rectangle in desktop coordinates."""
         here = self._monitor.get_geometry()
         return (here.x + self._x, here.y + self._y,
-                self._width / self._scale, self._height / self._scale)
+                self._width * self._zoom / self._scale,
+                self._height * self._zoom / self._scale)
 
     def _move_by(self, dx, dy, settle=True):
         self._x += dx
@@ -259,6 +298,32 @@ class Pin(Gtk.Window):
         heir._update_twins()
         self.close()
 
+    def _zoom_by(self, factor, around=None):
+        """Scale the pin; `around` (desktop coordinates) stays where it is,
+        the centre if not given."""
+        zoom = min(MAX_ZOOM, max(MIN_ZOOM, self._zoom * factor))
+        self._set_zoom(zoom, around)
+
+    def _set_zoom(self, zoom, around=None, settle=True):
+        placed = self._layer and self._monitor is not None
+        if placed:
+            x, y, width, height = self._bounds()
+            ax, ay = around or (x + width / 2, y + height / 2)
+            factor = zoom / self._zoom
+            here = self._monitor.get_geometry()
+            self._x = ax - (ax - x) * factor - here.x
+            self._y = ay - (ay - y) * factor - here.y
+        for pin in (self, *self._twins.values()):
+            pin._zoom = zoom
+            pin._fit_scale(pin._scale)
+        if placed:
+            self._move_by(0, 0, settle=settle)
+
+    def _desktop_point(self, x, y):
+        """A point on this pin's surface, in desktop coordinates."""
+        here = self._monitor.get_geometry()
+        return here.x + self._x + x, here.y + self._y + y
+
     def _set_opacity(self, opacity):
         for pin in (self, *self._twins.values()):
             pin._picture.set_opacity(opacity)
@@ -266,10 +331,48 @@ class Pin(Gtk.Window):
     # --------------------------------------------------------------- input
     # Input on a twin goes to its owner: the pin is the pair as a whole.
 
-    def _on_drag_begin(self, _gesture, _x, _y):
+    def _corner_at(self, x, y):
+        """The corner ("nw", "se", …) under a point on this surface, if
+        it is near enough to resize from."""
+        if not self._layer or self._monitor is None:
+            return None
+        px, py = self._desktop_point(x, y)
+        left, top, width, height = self._bounds()
+        zone = min(CORNER, width / 4, height / 4)
+        vertical = "n" if py < top + zone else \
+            "s" if py > top + height - zone else ""
+        horizontal = "w" if px < left + zone else \
+            "e" if px > left + width - zone else ""
+        return vertical + horizontal if vertical and horizontal else None
+
+    def _on_motion(self, _controller, x, y):
+        self._pointer = (x, y)
+        corner = self._corner_at(x, y)
+        self.set_cursor_from_name(f"{corner}-resize" if corner else None)
+
+    def _on_drag_begin(self, _gesture, x, y):
         self._handed_over = False
+        #: While resizing: the corner that stays put, in desktop coordinates.
+        self._resize_anchor = None
+        corner = self._corner_at(x, y)
+        if corner:
+            left, top, width, height = (self._owner or self)._bounds()
+            self._resize_anchor = (left + width if "w" in corner else left,
+                                   top + height if "n" in corner else top)
 
     def _on_drag_update(self, gesture, dx, dy):
+        if self._resize_anchor:
+            # The aspect is kept: the pin follows whichever way the pointer
+            # has moved further, scaled around the opposite corner.
+            _ok, x, y = gesture.get_start_point()
+            px, py = self._desktop_point(x + dx, y + dy)
+            ax, ay = self._resize_anchor
+            zoom = max(abs(px - ax) * self._scale / self._width,
+                       abs(py - ay) * self._scale / self._height)
+            (self._owner or self)._set_zoom(
+                min(MAX_ZOOM, max(MIN_ZOOM, zoom)), self._resize_anchor,
+                settle=False)
+            return
         if self._layer:
             # The offset is measured from where the pointer went down, in
             # surface coordinates. Moving the surface by it brings the
@@ -299,15 +402,36 @@ class Pin(Gtk.Window):
         if n_press == 2:
             (self._owner or self).close()
 
-    def _on_scroll(self, _controller, _dx, dy):
+    def _on_scroll(self, controller, dx, dy):
         owner = self._owner or self
-        opacity = owner._picture.get_opacity() - dy * OPACITY_STEP
-        owner._set_opacity(min(1.0, max(MIN_OPACITY, opacity)))
-        return True
+        state = controller.get_current_event_state()
+        # Some stacks turn a Shift+wheel into horizontal scrolling.
+        delta = dy or dx
+        if state & Gdk.ModifierType.CONTROL_MASK:
+            around = None
+            if self._layer and self._pointer and self._monitor is not None:
+                around = self._desktop_point(*self._pointer)
+            owner._zoom_by(SCROLL_ZOOM_STEP ** -delta, around)
+            return True
+        if state & Gdk.ModifierType.SHIFT_MASK:
+            opacity = owner._picture.get_opacity() - delta * OPACITY_STEP
+            owner._set_opacity(min(1.0, max(MIN_OPACITY, opacity)))
+            return True
+        return False
 
     def _on_key(self, _controller, keyval, _keycode, state):
         if keyval == Gdk.KEY_Escape:
             self.close()
+            return True
+        if state & Gdk.ModifierType.CONTROL_MASK:
+            if keyval in (Gdk.KEY_plus, Gdk.KEY_equal, Gdk.KEY_KP_Add):
+                self._zoom_by(ZOOM_STEP)
+            elif keyval in (Gdk.KEY_minus, Gdk.KEY_KP_Subtract):
+                self._zoom_by(1 / ZOOM_STEP)
+            elif keyval in (Gdk.KEY_0, Gdk.KEY_KP_0):
+                self._set_zoom(1.0)
+            else:
+                return False
             return True
         if not self._layer:
             return False

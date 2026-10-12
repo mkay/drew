@@ -43,7 +43,7 @@ Delete removes the selection, Esc deselects, arrow keys nudge (Shift = 10 px). P
 
 ## Pin to Screen
 
-Ctrl+P (or Pin to Screen in the menu, or `drew --pin`) puts the image on screen by itself — no window frame, no toolbar — to drag around and see how an element would look somewhere else. Drag to move it, arrow keys nudge (Shift = 10 px), scroll changes its opacity, Esc or a double-click closes it. Pin as many as you like; they stay open after the editor closes.
+Ctrl+P (or Pin to Screen in the menu, or `drew --pin`) puts the image on screen by itself — no window frame, no toolbar — to drag around and see how an element would look somewhere else. Drag to move it, arrow keys nudge (Shift = 10 px). Drag a corner to resize it, or use Ctrl+scroll (fine) and Ctrl+plus/minus (coarse); Ctrl+0 brings it back to 1:1. Shift+scroll changes its opacity. Esc or a double-click closes it. Pin as many as you like; they stay open after the editor closes.
 
 With [gtk4-layer-shell](https://github.com/wmww/gtk4-layer-shell) installed and a compositor that supports it (Sway, Hyprland, Wayfire, KDE and other wlroots-based ones), a pin floats above every window. Elsewhere, GNOME included, it is a borderless window; keeping it on top is up to the compositor.
 
