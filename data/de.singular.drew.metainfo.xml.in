@@ -32,6 +32,11 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.4.0" date="2026-10-12">
+      <description>
+        <p>Pin to Screen (Ctrl+P, or drew --pin): the image alone on screen, without any window chrome, to drag around as a mockup. Resize it by its corners or Ctrl+scroll, fade it with Shift+scroll; with gtk4-layer-shell it floats above every window and can span monitors.</p>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-09-16">
       <description>
         <p>The save button gains a menu: save and show the file in its folder, or save and copy its path. The "Saved" toast offers a Show in Folder button.</p>
