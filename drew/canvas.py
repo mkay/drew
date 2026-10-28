@@ -24,6 +24,8 @@ MARGIN = 6
 HANDLE_PX = 9
 ZOOM_MIN, ZOOM_MAX = 0.1, 8.0
 ZOOM_STEP = 1.25
+#: Offset of a duplicate from its original, in image pixels.
+DUPLICATE_OFFSET = 16.0
 
 
 def _context_menu():
@@ -35,6 +37,7 @@ def _context_menu():
     order.append(_("Send to Back"), "win.back")
     menu.append_section(None, order)
     edit = Gio.Menu()
+    edit.append(_("Duplicate"), "win.duplicate")
     edit.append(_("Delete"), "win.delete")
     menu.append_section(None, edit)
     return menu
@@ -216,6 +219,16 @@ class Canvas(Gtk.DrawingArea):
             return
         self.doc.remove(self.selection)
         self.select(None)
+        self.commit()
+
+    def duplicate_selection(self):
+        if self.selection is None or isinstance(self.selection, Crop):
+            return
+        copy = self.selection.clone()
+        copy.move(DUPLICATE_OFFSET, DUPLICATE_OFFSET)
+        self.doc.add(copy)
+        self.doc.renumber_markers()
+        self.select(copy)
         self.commit()
 
     def restack_selection(self, where):

@@ -11,6 +11,7 @@ from drew.i18n import _
 from drew import export
 from drew.canvas import MARGIN, Canvas
 from drew.document import Document
+from drew.model import Crop
 from drew.pin import pin_document
 from drew.preferences import PreferencesDialog
 from drew.stylebox import StyleButton
@@ -249,6 +250,12 @@ class Window(Adw.ApplicationWindow):
         delete.set_enabled(False)
         self.add_action(delete)
 
+        duplicate = Gio.SimpleAction.new("duplicate", None)
+        duplicate.connect("activate",
+                          lambda *_: self.canvas.duplicate_selection())
+        duplicate.set_enabled(False)
+        self.add_action(duplicate)
+
         for name in ("raise", "lower", "front", "back"):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate",
@@ -283,6 +290,8 @@ class Window(Adw.ApplicationWindow):
         selected = canvas.selection is not None
         for name in ("delete", "raise", "lower", "front", "back"):
             self.lookup_action(name).set_enabled(selected)
+        self.lookup_action("duplicate").set_enabled(
+            selected and not isinstance(canvas.selection, Crop))
         self._show_style_context()
 
     def _show_style_context(self):

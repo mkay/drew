@@ -71,6 +71,7 @@ class Application(Adw.Application):
         self.set_accels_for_action("win.save-as", ["<Control><Shift>s"])
         self.set_accels_for_action("window.close", ["<Control>w"])
         self.set_accels_for_action("win.delete", ["Delete", "BackSpace"])
+        self.set_accels_for_action("win.duplicate", ["<Control>d"])
         self.set_accels_for_action("win.raise", ["Page_Up"])
         self.set_accels_for_action("win.lower", ["Page_Down"])
         self.set_accels_for_action("win.front", ["Home"])

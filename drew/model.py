@@ -15,7 +15,7 @@ update the shape.
 
 import itertools
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 _ids = itertools.count(1)
 
@@ -58,6 +58,11 @@ class Annotation:
     @classmethod
     def props(cls):
         return cls.PROPS
+
+    def clone(self):
+        """An independent copy with its own style and id."""
+        return replace(self, style=replace(self.style),
+                       id=next(_ids))
 
     def bounds(self):
         """(x, y, w, h) enclosing the shape, ignoring stroke width."""
