@@ -3,6 +3,7 @@
 
 """Turn a Document into image bytes or a file."""
 
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -80,8 +81,48 @@ def pictures_dir():
     return Path(pictures) if pictures else Path.home()
 
 
+def default_save_dir(settings):
+    """The permanent folder: the preference, else Pictures."""
+    return Path(settings.get("save_dir") or pictures_dir())
+
+
+def _temp_file():
+    # XDG_RUNTIME_DIR is per login session and cleared at logout or reboot,
+    # which is exactly how long a temporary folder should last. Every Drew
+    # launch is its own process, so the override has to live outside one.
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    return Path(runtime) / "drew" / "save-dir" if runtime else None
+
+
+def temp_save_dir():
+    """The temporary save folder if one is set and still exists, else None."""
+    path = _temp_file()
+    try:
+        folder = Path(path.read_text().strip()) if path else None
+    except (OSError, ValueError):
+        return None
+    return folder if folder and folder.is_dir() else None
+
+
+def set_temp_save_dir(folder):
+    """Set the temporary folder, or clear it with None."""
+    path = _temp_file()
+    if path is None:
+        return
+    if folder is None:
+        path.unlink(missing_ok=True)
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(str(folder))
+
+
+def save_dir(settings):
+    """Where Save writes now: the temporary folder, else the permanent one."""
+    return temp_save_dir() or default_save_dir(settings)
+
+
 def default_save_path(settings, fmt="png"):
     """<folder>/<prefix>-YYYYMMDD-HHMMSS.png — never collides with the input."""
-    directory = Path(settings.get("save_dir") or pictures_dir())
+    directory = save_dir(settings)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     return directory / f"{settings.get('filename_prefix')}-{stamp}{FORMATS[fmt][1]}"

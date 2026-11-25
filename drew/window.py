@@ -71,14 +71,24 @@ class Window(Adw.ApplicationWindow):
 
         # The main click saves; the arrow offers the "and then" variants.
         save_menu = Gio.Menu()
-        save_menu.append(_("Save and Show in Folder"), "win.save-show")
-        save_menu.append(_("Save and Copy Path"), "win.save-copy-path")
-        save_button = Adw.SplitButton(icon_name="drew-save-symbolic",
+        then = Gio.Menu()
+        then.append(_("Save and Show in Folder"), "win.save-show")
+        then.append(_("Save and Copy Path"), "win.save-copy-path")
+        save_menu.append_section(None, then)
+        self._folder_section = Gio.Menu()
+        save_menu.append_section(None, self._folder_section)
+        self._save_button = save_button = Adw.SplitButton(icon_name="drew-save-symbolic",
                                       tooltip_text=_("Save (Ctrl+S)"),
                                       menu_model=save_menu)
         save_button.add_css_class("suggested-action")
         save_button.set_action_name("win.save")
         header.pack_end(save_button)
+        # Shown only while a temporary save folder is in effect.
+        self._folder_badge = Gtk.Image(icon_name="drew-folder-symbolic",
+                                       valign=Gtk.Align.CENTER)
+        self._folder_badge.add_css_class("accent")
+        header.pack_end(self._folder_badge)
+        self._update_save_folder()
 
         copy_button = Gtk.Button(icon_name="drew-copy-symbolic",
                                  tooltip_text=_("Copy to Clipboard (Ctrl+C)"))
@@ -172,7 +182,8 @@ class Window(Adw.ApplicationWindow):
         self.canvas.set_document(doc)
         has_doc = doc is not None
         self._stack.set_visible_child_name("canvas" if has_doc else "empty")
-        for name in ("save", "save-as", "save-show", "save-copy-path"):
+        for name in ("save", "save-as", "save-show", "save-copy-path",
+                     "save-temp"):
             self.lookup_action(name).set_enabled(has_doc)
         self.lookup_action("copy").set_enabled(has_doc)
         self.lookup_action("pin").set_enabled(has_doc)
@@ -223,6 +234,8 @@ class Window(Adw.ApplicationWindow):
             ("open", self._on_open),
             ("save", self._on_save),
             ("save-as", self._on_save_as),
+            ("save-temp", self._on_save_temp),
+            ("save-temp-reset", self._on_reset_save_folder),
             ("save-show", lambda *_: self._on_save(after=self._show_in_folder)),
             ("save-copy-path", lambda *_: self._on_save(after=self._copy_path)),
             ("show-saved", lambda *_: self._show_in_folder(self._last_saved)),
@@ -377,6 +390,45 @@ class Window(Adw.ApplicationWindow):
         path = self.output or export.default_save_path(self.settings)
         if self._save_to(path) and after:
             after(path)
+
+    def _update_save_folder(self):
+        """Keep the Save menu, tooltip and badge in step with the temporary folder."""
+        temp = export.temp_save_dir()
+        self._folder_section.remove_all()
+        self._folder_section.append(_("Save to Temp Folder"), "win.save-temp")
+        if temp:
+            self._folder_section.append(_("Reset to Default Folder"),
+                                        "win.save-temp-reset")
+            self._save_button.set_tooltip_text(
+                _("Save to {folder} (Ctrl+S)").format(folder=temp))
+        else:
+            self._save_button.set_tooltip_text(_("Save (Ctrl+S)"))
+        self._folder_badge.set_visible(bool(temp))
+        self._folder_badge.set_tooltip_text(
+            _("Saving to {folder}").format(folder=temp) if temp else None)
+
+    def _on_save_temp(self, *_args):
+        # Already set: it is just a Save. Otherwise pick the folder first.
+        if export.temp_save_dir():
+            self._on_save()
+            return
+        dialog = Gtk.FileDialog(title=_("Save to Temp Folder"))
+        dialog.set_initial_folder(
+            Gio.File.new_for_path(str(export.save_dir(self.settings))))
+        dialog.select_folder(self, None, self._on_temp_folder_picked)
+
+    def _on_temp_folder_picked(self, dialog, result):
+        try:
+            folder = dialog.select_folder_finish(result)
+        except GLib.Error:
+            return  # cancelled
+        export.set_temp_save_dir(folder.get_path())
+        self._update_save_folder()
+        self._on_save()
+
+    def _on_reset_save_folder(self, *_args):
+        export.set_temp_save_dir(None)
+        self._update_save_folder()
 
     def _on_save_as(self, *_args):
         dialog = Gtk.FileDialog(title=_("Save Image"))
