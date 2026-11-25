@@ -1,6 +1,6 @@
 # Maintainer: Kreuder <mk@singular.de>
 pkgname=drew
-pkgver=0.5.0
+pkgver=0.6.0
 pkgrel=1
 pkgdesc='Image annotation for Wayland. Bells and whistles included'
 arch=('any')
