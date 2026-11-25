@@ -32,6 +32,11 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.6.0" date="2026-11-25">
+      <description>
+        <p>Save to Temp Folder, in the menu next to the Save button: pick a folder once and every following Save lands there, even from new Drew windows, until you reset it or log out. A folder icon beside Save shows while it is active.</p>
+      </description>
+    </release>
     <release version="0.5.0" date="2026-10-28">
       <description>
         <p>Duplicate the selected annotation with Ctrl+D or from the right-click menu: the copy is offset a little and selected, so it can be dragged straight away. The app icon is now just the logo, without the background tile.</p>

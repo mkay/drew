@@ -20,7 +20,7 @@ Drew captures nothing itself — it takes its image from grim, wl-paste or any o
     grim - | drew - -o - | wl-copy             # Ctrl+S writes to stdout and quits
     grim -g "$(slurp)" - | drew --pin -        # pin it to the screen right away
 
-Without `-o`, Ctrl+S writes `~/Pictures/screenshot-YYYYMMDD-HHMMSS.png` — folder and prefix are configurable in Preferences (Ctrl+,); Ctrl+Shift+S asks. The input file is never overwritten.
+Without `-o`, Ctrl+S writes `~/Pictures/screenshot-YYYYMMDD-HHMMSS.png` — folder and prefix are configurable in Preferences (Ctrl+,); Ctrl+Shift+S asks. The input file is never overwritten. For a series of shots that belong together, the arrow next to Save offers *Save to Temp Folder*: pick a folder once and every Save (and every new Drew window) writes there until you choose *Reset to Default Folder* or log out.
 
 ## Tools
 
